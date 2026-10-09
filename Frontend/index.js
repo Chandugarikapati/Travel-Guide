@@ -125,13 +125,13 @@ voiceButtons.forEach(btn => {
 
 // Backend URL configuration:
 // Defaults to local backend (http://127.0.0.1:5001) for local testing (localhost, 127.0.0.1, or opened via file://)
-const isLocal = !window.location.hostname || 
-                window.location.hostname === "localhost" || 
-                window.location.hostname === "127.0.0.1";
+const isLocal = !window.location.hostname ||
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
 
 const API_BASE_URL = isLocal
   ? "http://127.0.0.1:5001"
-  : "https://YOUR_BACKEND_URL.onrender.com"; // <-- Update with your deployed Render URL when deploying
+  : "https://travel-guide-b4h0.onrender.com"; // <-- Update with your deployed Render URL when deploying
 
 const GENERATE_AUDIO_GUIDE_API_URL = `${API_BASE_URL}/generate-audio-guide`;
 
