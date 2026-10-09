@@ -123,9 +123,12 @@ voiceButtons.forEach(btn => {
 });
 
 
-// Generate Audio guide button Logic
+// Change this URL to your deployed backend URL (e.g. "https://travel-guide-backend.onrender.com") when deploying
+const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://127.0.0.1:5000"
+  : "https://YOUR_BACKEND_URL.onrender.com"; // <-- Replace with your live backend URL
 
-const GENERATE_AUDIO_GUIDE_API_URL = "http://127.0.0.1:5000/generate-audio-guide";
+const GENERATE_AUDIO_GUIDE_API_URL = `${API_BASE_URL}/generate-audio-guide`;
 
 generateButton.addEventListener('click', async () => {
   generateButton.disabled = true;
