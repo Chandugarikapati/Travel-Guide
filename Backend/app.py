@@ -6,7 +6,11 @@ import requests
 import tempfile
 import base64
 import os
+from pathlib import Path
 
+# Load environment variables from the Backend directory and working directory
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
 app = Flask(__name__)
@@ -14,6 +18,10 @@ CORS(app)
 MURF_API_KEY = os.getenv("MURF_API_KEY")
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok", "message": "Travel Guide API is running"})
 
 PROMPTS = {
     "Summary": """
@@ -97,24 +105,32 @@ def generate_description(place, answer_type, language):
     
 @app.route("/generate-audio-guide", methods=["POST"])
 def generate_audio_guide():
-    data = request.json
-    place = data["place"]
-    answer_type = data["answerType"]
-    language = data["language"]
-    voice_id = data["voiceId"]
-    locale = data["locale"]
+    try:
+        data = request.json or {}
+        place = data.get("place")
+        answer_type = data.get("answerType", "Summary")
+        language = data.get("language", "English")
+        voice_id = data.get("voiceId", "Matthew")
+        locale = data.get("locale", "en-US")
 
+        if not place:
+            return jsonify({"error": "Place name is required"}), 400
 
-    text_description = generate_description(place, answer_type, language)
-    audio_path = generate_speech(text_description, voice_id, locale)
-    audio_bytes = open(audio_path.name, "rb").read()
-    encoded_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        text_description = generate_description(place, answer_type, language)
+        audio_path = generate_speech(text_description, voice_id, locale)
+        with open(audio_path.name, "rb") as f:
+            audio_bytes = f.read()
+        encoded_audio = base64.b64encode(audio_bytes).decode("utf-8")
 
-    return {
-        "description": text_description,
-        "audioBase64": encoded_audio
-                }
+        return jsonify({
+            "description": text_description,
+            "audioBase64": encoded_audio
+        })
+    except Exception as e:
+        print(f"Error in generate_audio_guide: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
+    print(f"Starting Travel Guide Backend on http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)

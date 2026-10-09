@@ -123,14 +123,24 @@ voiceButtons.forEach(btn => {
 });
 
 
-// Change this URL to your deployed backend URL (e.g. "https://travel-guide-backend.onrender.com") when deploying
-const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://127.0.0.1:5000"
-  : "https://YOUR_BACKEND_URL.onrender.com"; // <-- Replace with your live backend URL
+// Backend URL configuration:
+// Defaults to local backend (http://127.0.0.1:5001) for local testing (localhost, 127.0.0.1, or opened via file://)
+const isLocal = !window.location.hostname || 
+                window.location.hostname === "localhost" || 
+                window.location.hostname === "127.0.0.1";
+
+const API_BASE_URL = isLocal
+  ? "http://127.0.0.1:5001"
+  : "https://YOUR_BACKEND_URL.onrender.com"; // <-- Update with your deployed Render URL when deploying
 
 const GENERATE_AUDIO_GUIDE_API_URL = `${API_BASE_URL}/generate-audio-guide`;
 
 generateButton.addEventListener('click', async () => {
+  if (!state.place) {
+    alert("Please select a destination first!");
+    return;
+  }
+
   generateButton.disabled = true;
   generateButton.textContent = '⏳ Generating Audio...';
 
@@ -150,9 +160,11 @@ generateButton.addEventListener('click', async () => {
       })
     });
 
-    if (!response.ok) throw new Error('Generation failed');
-
     const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Server responded with status ${response.status}`);
+    }
 
     // Update UI with Result
     transcriptText.textContent = data.description;
@@ -169,8 +181,8 @@ generateButton.addEventListener('click', async () => {
     }
 
   } catch (err) {
-    console.error(err);
-    alert('Generation failed. Please check your connection.');
+    console.error("Audio generation error:", err);
+    alert(`Generation failed: ${err.message || 'Unable to connect to backend'}.\n\nPlease ensure your Python backend is running on http://127.0.0.1:5001`);
     generateButton.textContent = 'Generate Audio Guide';
     generateButton.disabled = false;
   }
